@@ -2,6 +2,10 @@ package conexionBD;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.WriteResult;
+import Firebase.conectFirebase;
 import modelo.marca;
 import views.ventanasAvisos;
 
@@ -17,6 +21,7 @@ public class DBMarca {
 	}
 	
 	public void registrarMarca(marca marca) {
+		cargaFirestore(marca);
 		
         try {
             pre= coneCone.connect().prepareStatement(instruccionesSQL.instruccionRegistrarMarca);
@@ -25,12 +30,25 @@ public class DBMarca {
             pre.execute();
             pre.close();
             coneCone.connect().close();
-            avisos.cargaCorrecta(ventanasAvisos.CARGA_OK);
+            //avisos.cargaCorrecta(ventanasAvisos.CARGA_OK);     
+            
         } catch (Exception e) {
         	System.out.print("No se pudo cargar" + e.getMessage());
         	avisos.cargaFallida(ventanasAvisos.CARGA_ERROR, e.getMessage());
         }
     }
+	
+	private void cargaFirestore(marca marca) {
+    	
+    	DocumentReference docRef = conectFirebase.getInstance().collection("marcas").document();
+
+    	ApiFuture<WriteResult> result = docRef.create(marca);
+    	
+    	if(result.isDone()) {
+    		avisos.cargaCorrecta(ventanasAvisos.CARGA_OK); 	
+    	}
+	}
+
 	public boolean verificarCodigo(int codigo) {
 		
 		boolean estado = false;
